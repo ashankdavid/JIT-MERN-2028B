@@ -5,7 +5,7 @@ import AddTask from "./AddTask";
 function Dashboard(props) {
 
     async function toggleTask(id){
-        const task = props.tasks.find((task)=>task.id === id);
+        const task = props.tasks.find((task)=>task._id === id);
         const newStatus = task.status ==="Completed"
          ? "Pending" : "Completed";
         
@@ -24,7 +24,7 @@ function Dashboard(props) {
 
         props.setTasks(
             props.tasks.map((task) => {
-                if(task.id === id){
+                if(task._id === id){
                     return updatedTask;
                 }
                 return task;
@@ -43,7 +43,7 @@ function Dashboard(props) {
 
             const deletedTask = await response.json();
         props.setTasks(
-            props.tasks.filter((task)=>task.id !== deletedTask.id)
+            props.tasks.filter((task)=>task._id !== deletedTask._id)
         );
     }
 
@@ -64,13 +64,13 @@ function Dashboard(props) {
             <div className="tasks-container">
                 {props.tasks.map((task)=>(
                     <TaskCard 
-                        key={task.id} 
-                        id ={task.id}
+                        key={task._id} 
+                        id ={task._id}
                         title={task.title} 
                         description={task.description} 
                         status={task.status}
-                        onToggle={()=>toggleTask(task.id)} 
-                        onDelete={()=>deleteTask(task.id)}
+                        onToggle={()=>toggleTask(task._id)} 
+                        onDelete={()=>deleteTask(task._id)}
                     />
                 ))};
             </div>

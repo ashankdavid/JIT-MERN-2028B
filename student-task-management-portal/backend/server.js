@@ -8,14 +8,16 @@ const cors = require("cors");
 
 // create express app using what we imported
 const app = express();
-
+const Task = require("./models/Task");
 const mongoose = require("mongoose");
+const dns = require("dns");
+dns.setServers(['8.8.8.8']);
 
 // use cors middleware to handle requests
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URL)
+mongoose.connect(process.env.MONGODB_URI)
 .then(()=>{
     console.log
     ("MongoDB Connected Successfully!");
@@ -24,58 +26,62 @@ mongoose.connect(process.env.MONGODB_URL)
     ("MongoDB Connection Failed: ", error.message);
 })
 
-const tasks = [
-    {
-        id:1,
-        title:"Learn React",
-        description:"Understanding Components",
-        status: "Completed"
-    },
-    {
-        id:2,
-        title:"Learn JavaScript",
-        description:"Understanding Variables, Functions",
-        status: "Pending"
-    }   
-];
-
-app.get("/api/tasks", (req, res) =>{
-    res.json(tasks);
+app.get("/api/tasks", async (req, res) =>{
+    try{
+        const tasks = await Task.find();
+        res.json(tasks);
+    }catch(error){
+        res.status(500).json({message:"Failed to Fetch Tasks"});
+    }
 });
 
-app.get("/api/tasks/:id", (req, res)=>{
-    const id = Number(req.params.id);
-    const task = tasks.find((task)=> task.id === id);
-    if(!task){
-        return res.status(404).json({message : "Task not found!"});
+app.get("/api/tasks/:id",async (req, res)=>{
+    try{
+        const task = await Task.findById(req.params.id);
+        if(!task){
+            return res.status(404).json({message:"Task Not Found!"});
+        }
+        res.json(task);
+    }catch(error){
+        res.status(500).json({messgae: "Failed to fetch task!"})
     }
-    res.json(task);
 })
 
-app.put("/api/tasks/:id", (req, res)=>{
-    const id = Number(req.params.id);
-    const task = tasks.find((task)=>task.id === id);
-    if(!task){
-        return res.status(404).json({message:"Task Not Found"})
+app.put("/api/tasks/:id", async (req, res)=>{
+    try{
+        const task = await Task.findByIdAndUpdate(
+            req.params.id,
+            {status: req.body.status},
+            {new : true}
+        );
+        if(!task){
+            return res.status(404).json({message:"Task Not Found!"});
+        }
+        res.json(task);
+    }catch{
+        res.status(500).json({messgae: "Failed to fetch task!"})
     }
-    task.status = req.body.status;
-    res.json(task);
 })
 
-app.delete("/api/tasks/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const taskIndex = tasks.findIndex((task)=> task.id === id);
-    if(taskIndex === -1){
-        return res.status(404).json({message: "Task Not Found"});
+app.delete("/api/tasks/:id",async (req, res) => {
+    try{
+        const deletedTask = await Task.findByIdAndDelete(req.params.id);
+        if(!deletedTask){
+            return res.status(404).json({message:"Task Not Found!"});
+        }
+        res.json(deletedTask);
+    }catch(error){
+        res.status(500).json({messgae: "Failed to fetch task!"})
     }
-    const deletedTask = tasks.splice(taskIndex, 1);
-    res.json(deletedTask[0]);
-})
+});
 
-app.post("/api/tasks", (req, res)=>{
-    const newTask = req.body;
-    tasks.push(newTask);
-    res.status(201).json(newTask);
+app.post("/api/tasks",async (req, res)=>{
+    try{
+        const newTask = await Task.create(req.body);
+        res.status(201).json(newTask);
+    }catch(error){
+        res.status(500).json({messgae: "Failed to fetch task!"})
+    }
 })
 
 // API Route (Testing Backend)
