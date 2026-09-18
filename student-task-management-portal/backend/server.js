@@ -11,7 +11,9 @@ const app = express();
 const Task = require("./models/Task");
 const User = require("./models/User");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 const dns = require("dns");
+const jwt = require("jsonwebtoken");
 dns.setServers(['8.8.8.8']);
 
 // use cors middleware to handle requests
@@ -93,10 +95,11 @@ app.get("/", (req, res) => {
 app.post("/api/register", async (req, res)=>{
     try{
         const {name, email, password} = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({
             name,
             email,
-            password
+            password: hashedPassword
         });
 
         res.status(201).json({
@@ -106,6 +109,42 @@ app.post("/api/register", async (req, res)=>{
     }catch(error){
         res.status(500).json({
             message: "Registration Failed"
+        });
+    }
+});
+
+app.post("/api/login", async (req, res) => {
+    try{
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(404).json({
+                message: "User Not Found!"
+            });
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(
+            password,
+            user.password
+        );
+        if(!isPasswordCorrect){
+            return res.status(401).json({
+                message: "Invalid Password"
+            });
+        }
+        const token = jwt.sign(
+            {userId: user._id},
+            "mysecretkey",
+            {expiresIn: "1h"}
+        );
+        res.json({
+            message: "Login Successful!",
+            token: token
+        });
+    }catch(error){
+        console.log(error);
+        res.status(500).json({
+            message: "login Failed!"
         });
     }
 });
