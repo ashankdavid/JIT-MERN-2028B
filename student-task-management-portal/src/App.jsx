@@ -7,6 +7,7 @@ import {Routes, Route} from "react-router-dom"
 import Tasks from "./components/Tasks";
 import TaskDetails from "./components/TaskDetails";
 import Login from "./components/Login";
+import Register from "./components/Register";
 import { useState, useEffect } from "react";
 function App(){
 
@@ -29,6 +30,7 @@ function App(){
         <Route path="/tasks/:id" 
                element={<TaskDetails tasks={tasks} />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </div>
   );
